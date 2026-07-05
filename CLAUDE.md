@@ -55,8 +55,11 @@ die anderen Instanzen bauen und diese EXE überspringen (User schließt die App)
 - Version + `ReleaseDate` in `src/HypeTrainWidgetApp.cs` (ganz oben) setzen; `GitHubRepo` =
   `Bittersweet1987/StreamerHypeTrain`.
 - ZIP direkt aus dem **Repo-Root** packen (`src/`, `public/`, `defaults/`, `HypeTrainWidget.exe`,
-  die drei WebView2-DLLs, LICENSE, README — **ohne** `data/`, `.git/`, `tests/`,
-  `HypeTrainWidget-DevApp/`, `HypeTrainWidget-TestApp/`), mit **Forward-Slash**-Einträgen
+  die drei WebView2-DLLs, LICENSE, README — **ohne** `data/`, `.git/`, `tests/`, `CLAUDE.md`
+  (interne Projekt-Landkarte, nicht für Endnutzer), `HypeTrainWidget-DevApp/`,
+  `HypeTrainWidget-TestApp/`, `HypeTrainWidget.exe.WebView2/` (lokaler Browser-Cache, entsteht
+  beim Ausführen — **niemals** mit ins ZIP, enthält u. a. Cookies/History), unbenutzte
+  Roh-Bilder unter `public/assets/img/` außer `logo.png`), mit **Forward-Slash**-Einträgen
   (WebView/Update-Installer erwartet das). Standard-Skript: PowerShell
   `System.IO.Compression.ZipArchive`, jeden Entry mit `.Replace('\\','/')` anlegen.
 - `gh release create vX.Y.Z <zip> --title … --notes-file … --target main`.

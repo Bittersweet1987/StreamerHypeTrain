@@ -18,7 +18,7 @@ namespace HypeTrainWidgetApp
 {
     internal static class AppInfo
     {
-        public const string Version = "0.2.0";
+        public const string Version = "0.2.1";
         public const string ReleaseDate = "2026-07-05";
         public const string GitHubRepo = "Bittersweet1987/StreamerHypeTrain";
     }
