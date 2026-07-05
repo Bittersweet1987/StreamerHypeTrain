@@ -1,0 +1,194 @@
+* {
+  box-sizing: border-box;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+  width: 100%;
+  height: 100%;
+  background: transparent;
+  overflow: hidden;
+  font-family: "Segoe UI", Inter, Arial, sans-serif;
+}
+
+#overlay {
+  position: relative;
+  width: 100vw;
+  height: 100vh;
+  background: transparent;
+}
+
+.status {
+  position: absolute;
+  top: 12px;
+  left: 12px;
+  padding: 6px 12px;
+  border-radius: 6px;
+  background: rgba(179, 38, 30, 0.9);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.stage {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Rails span the full canvas width near the bottom edge. Everything train-related lives
+   in the bottom quarter of the 1080p canvas. */
+.rails {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 1.8vh;
+  height: 4.6vh;
+  pointer-events: none;
+}
+
+/* Steel rail bar (the train's wheels rest on its top edge). */
+.rails::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 26%;
+  background: linear-gradient(#ececec, #a3a3a3 45%, #5c5c5c);
+  border-radius: 2px;
+  box-shadow: 0 2px 3px rgba(0, 0, 0, 0.45);
+}
+
+/* Wooden sleepers below the rail. */
+.rails::after {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 34%;
+  bottom: 0;
+  background: repeating-linear-gradient(
+    90deg,
+    #54402b 0px,
+    #3d2d1c 26px,
+    transparent 26px,
+    transparent 66px
+  );
+  border-radius: 2px;
+}
+
+/* The whole train (locomotive + couplers + wagons + end car) is one flex row anchored
+   just above the rails; left offset is set by JS so the locomotive rests near the right
+   screen edge and the rest of the train extends off-screen to the right until departure. */
+.train {
+  position: absolute;
+  bottom: 6.1vh;
+  display: flex;
+  flex-direction: row-reverse;
+  align-items: flex-end;
+  will-change: transform;
+}
+
+/* While assembling (images placing/layouting) the train stays invisible - it pops in
+   fully formed, stands briefly, then departs. */
+.train.is-assembling {
+  visibility: hidden;
+}
+
+.train-locomotive,
+.train-wagon,
+.train-endcar {
+  position: relative;
+  flex: 0 0 auto;
+  background-size: 100% 100%;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+/* Dark connector bar between two train pieces (buffers/coupling). */
+.train-coupler {
+  flex: 0 0 auto;
+  background: linear-gradient(#4a4038, #221c17);
+  border-radius: 3px;
+  margin-left: -2px;
+  margin-right: -2px;
+}
+
+.fallback-art {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  color: rgba(255, 255, 255, 0.75);
+  font-size: 12px;
+  font-weight: 700;
+  text-align: center;
+  padding: 6px;
+}
+
+/* Steam: a crop of the drawn smoke cloud, breathing from the chimney (bottom-center of
+   its own bounding box) so the already-illustrated puff looks alive instead of static. */
+.loco-steam {
+  transform-origin: 50% 100%;
+  animation: steam-breathe 2.6s ease-in-out infinite;
+  pointer-events: none;
+}
+
+@keyframes steam-breathe {
+  0%, 100% { transform: scale(1) translateY(0); opacity: 0.92; }
+  50% { transform: scale(1.07) translateY(-3%); opacity: 1; }
+}
+
+/* Layer order inside a wagon (bottom to top):
+   1) .wagon-avatar - plain transparent avatar PNG, taller than the wagon, its lower part
+      dipping into the car body.
+   2) .wagon-face - the wagon artwork itself, stacked above, hiding the dipped-in part so
+      the passenger looks seated inside the car.
+   3) .wagon-name - the username, placed on the golden sign of the wagon artwork. */
+.wagon-avatar {
+  position: absolute;
+  z-index: 1;
+  left: 50%;
+  transform: translateX(-50%);
+  width: auto;
+  border: 0;
+  background: none;
+  display: block;
+}
+
+.wagon-face {
+  position: absolute;
+  z-index: 2;
+  inset: 0;
+  background-size: 100% 100%;
+  background-position: center;
+  background-repeat: no-repeat;
+  pointer-events: none;
+}
+
+/* Username on the golden name plate of the wagon artwork. The percentages target the
+   sign area of the shipped waggon.png (trimmed): x 21..79%, upper half of the car body. */
+.wagon-name {
+  position: absolute;
+  z-index: 3;
+  left: 21%;
+  top: 4%;
+  width: 58%;
+  height: 44%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 800;
+  text-align: center;
+}
+
+/* Departure: the whole train slides left, off-screen. Duration is set inline per-run
+   (train length / speed). */
+.train.is-departing {
+  transition: transform linear;
+}

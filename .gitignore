@@ -1,0 +1,21 @@
+data/
+*-DevApp/
+*-TestApp/
+dist/
+*.exe
+*.exe.WebView2/
+*.dll
+*.log
+obj/
+bin/
+tests/node_modules/
+tests/_sut/
+tests/package-lock.json
+
+# Raw staging art dropped into assets/img for trimming - only logo.png is actually
+# referenced by the app; the processed locomotive/wagon/avatar art lives as base64 in
+# defaults/settings.json instead.
+public/assets/img/avatar_*.png
+public/assets/img/train.png
+public/assets/img/waggon*.png
+public/assets/img/end_car.png

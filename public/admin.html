@@ -1,0 +1,303 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Streamer Hype Train Admin</title>
+    <link rel="stylesheet" href="/assets/css/admin.css?v=20260705-1">
+    <script>
+      // Early diagnostics: runs BEFORE the admin.js module, so it can capture even a
+      // module parse/evaluation error (which the in-module reporter cannot see). Posts the
+      // exact error + location to the server log, and shows it on screen as a fallback.
+      (function () {
+        function report(msg) {
+          try {
+            fetch("/api/logs", {
+              method: "POST",
+              headers: { "content-type": "application/json" },
+              body: JSON.stringify({ category: "ui", level: "error", message: String(msg).slice(0, 800) }),
+              keepalive: true
+            });
+          } catch (e) {}
+          try {
+            var bar = document.getElementById("boot-error");
+            if (!bar) {
+              bar = document.createElement("div");
+              bar.id = "boot-error";
+              bar.style.cssText = "position:fixed;left:0;right:0;top:0;z-index:99999;background:#b3261e;color:#fff;font:13px/1.4 monospace;padding:8px 12px;white-space:pre-wrap";
+              (document.body || document.documentElement).appendChild(bar);
+            }
+            bar.textContent = "Startfehler: " + msg;
+          } catch (e) {}
+        }
+        window.addEventListener("error", function (e) {
+          report((e.message || "Fehler") + " @ " + (e.filename || "?") + ":" + (e.lineno || 0) + ":" + (e.colno || 0));
+        });
+        window.addEventListener("unhandledrejection", function (e) {
+          report("Promise: " + ((e.reason && e.reason.message) || e.reason));
+        });
+      })();
+    </script>
+  </head>
+  <body>
+    <div class="admin-shell">
+      <aside class="sidebar">
+        <div class="brand">
+          <img class="brand-mark" src="/assets/img/logo.png?v=20260705-logo1" alt="Streamer Hype Train Logo">
+          <div>
+            <strong>Streamer Hype Train</strong>
+            <span>Twitch Overlay App</span>
+          </div>
+        </div>
+        <nav class="nav" aria-label="Einstellungen">
+          <button class="nav-button is-active" data-tab="overview" data-i18n="nav-overview">Übersicht</button>
+          <button class="nav-button" data-tab="trigger" data-i18n="nav-trigger">Verbindung</button>
+          <button class="nav-button" data-tab="hypetrain" data-i18n="nav-hypetrain">Hypetrain</button>
+          <button class="nav-button" data-tab="log" data-i18n="nav-log">Log</button>
+          <button class="nav-button" data-tab="update" data-i18n="nav-update">Update</button>
+        </nav>
+        <div class="sidebar-settings">
+          <div class="seg-field">
+            <span class="seg-label" data-i18n="label-language">Sprache</span>
+            <div class="seg-toggle" id="language-toggle" role="radiogroup" aria-label="Sprache">
+              <button type="button" class="seg-option" data-value="de" role="radio">DE</button>
+              <button type="button" class="seg-option" data-value="en" role="radio">EN</button>
+            </div>
+          </div>
+        </div>
+        <div class="sidebar-status">
+          <div class="connection-pill" id="twitch-pill" data-i18n="pill-twitch-default">Twitch nicht verbunden</div>
+          <div class="connection-pill" id="obs-pill" data-i18n="pill-obs-default">OBS nicht verbunden</div>
+          <div class="connection-pill" id="hypetrain-pill" data-i18n="pill-hypetrain-idle">Kein Hype Train aktiv</div>
+        </div>
+      </aside>
+
+      <main class="workspace">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow" data-i18n="topbar-eyebrow">Lokale Verwaltung</p>
+            <h1 data-i18n="topbar-title">Hype Train</h1>
+          </div>
+          <div class="topbar-actions">
+            <button class="primary-button" id="save-settings" type="button" data-i18n="btn-save">Speichern</button>
+          </div>
+        </header>
+
+        <section class="notice" id="notice" hidden></section>
+
+        <section class="tab-panel is-active" data-panel="overview">
+          <section class="notice" id="update-banner" data-tone="warn" hidden></section>
+          <div class="tool-panel">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow" data-i18n="ov-status-eyebrow">Status</p>
+                <h2 data-i18n="ov-status-title">Verbindungsübersicht</h2>
+              </div>
+            </div>
+            <div class="metrics">
+              <div><strong id="metric-hype-state">idle</strong><span data-i18n="metric-hype-state-label">Hype-Train-Status</span></div>
+              <div><strong id="metric-participants">0</strong><span data-i18n="metric-participants-label">Teilnehmer</span></div>
+            </div>
+            <div class="status-line" id="twitch-status-overview" data-i18n="status-not-connected">Nicht verbunden</div>
+          </div>
+          <section class="tool-panel help-panel">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow" data-i18n="ov-help-eyebrow">Hilfe</p>
+                <h2 data-i18n="ov-help-title">Fragen?</h2>
+              </div>
+            </div>
+            <p class="hint" data-i18n="ov-help-text">Auf GitHub findest du eine kleine Anleitung, falls du Fragen zur Einrichtung oder den Funktionen hast.</p>
+            <div class="button-row">
+              <a class="secondary-button" href="https://github.com/Bittersweet1987/StreamerHypeTrain#readme" target="_blank" rel="noopener" data-i18n="btn-open-guide">Anleitung auf GitHub öffnen</a>
+            </div>
+          </section>
+        </section>
+
+        <section class="tab-panel" data-panel="trigger">
+          <section class="tool-panel">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Twitch</p>
+                <h2 data-i18n="nav-trigger">Verbindung</h2>
+              </div>
+            </div>
+            <p class="hint" data-i18n="trigger-hint">Verbinde deinen Haupt-Account. Diese eine Verbindung liefert sowohl die Hype-Train-Events als auch den Chat (zum Zählen einzigartiger Zuschauer).</p>
+            <div class="status-line" id="twitch-status" data-i18n="status-not-connected">Nicht verbunden</div>
+            <div class="button-row">
+              <button class="primary-button" id="connect-twitch" type="button" data-i18n="btn-connect-twitch">Mit Twitch anmelden</button>
+              <button class="secondary-button" id="refresh-twitch-status" type="button" data-i18n="btn-refresh-twitch-status">Status prüfen</button>
+              <button class="ghost-button" id="disconnect-twitch" type="button" data-i18n="btn-disconnect-twitch">Abmelden</button>
+            </div>
+          </section>
+
+          <section class="tool-panel">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">OBS</p>
+                <h2 data-i18n="obs-title">OBS-Verbindung</h2>
+              </div>
+            </div>
+            <p class="hint" data-i18n="obs-hint">Verbindet sich per obs-websocket (v5) mit OBS und legt automatisch eine Szene und eine Browser-Quelle für das Overlay an.</p>
+            <div class="form-grid">
+              <label><span data-i18n="label-obs-host">Host</span><input id="obs-host" type="text" placeholder="127.0.0.1"></label>
+              <label><span data-i18n="label-obs-port">Port</span><input id="obs-port" type="number" min="1" placeholder="4455"></label>
+              <label><span data-i18n="label-obs-password">Passwort</span><input id="obs-password" type="password"></label>
+              <label class="full-row"><span data-i18n="label-obs-scene">Szenenname</span><input id="obs-scene-name" type="text" placeholder="Hype Train"></label>
+              <label class="full-row"><span data-i18n="label-obs-source">Quellenname</span><input id="obs-source-name" type="text" placeholder="Hype Train Overlay"></label>
+            </div>
+            <div class="status-line" id="obs-status" data-i18n="status-not-tested">Nicht getestet</div>
+            <div class="button-row">
+              <button class="secondary-button" id="test-obs" type="button" data-i18n="btn-test-obs">OBS testen</button>
+              <button class="primary-button" id="setup-obs" type="button" data-i18n="btn-setup-obs">Szene / Quelle erstellen</button>
+            </div>
+          </section>
+        </section>
+
+        <section class="tab-panel" data-panel="hypetrain">
+          <section class="tool-panel">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow" data-i18n="ht-images-eyebrow">Bilder</p>
+                <h2 data-i18n="ht-images-title">Lokomotive, Endwagen &amp; Waggon</h2>
+              </div>
+            </div>
+            <div class="upload-grid">
+              <div class="upload-card">
+                <h3 data-i18n="ht-locomotive-label">Lokomotive</h3>
+                <div class="upload-preview" id="preview-locomotive" style="height:160px"></div>
+                <div class="button-row">
+                  <label class="secondary-button file-label"><span data-i18n="btn-choose-file">Auswählen</span><input id="upload-locomotive" type="file" accept="image/*"></label>
+                  <button class="danger-button" id="remove-locomotive" type="button" data-i18n="btn-remove">Entfernen</button>
+                </div>
+              </div>
+              <div class="upload-card">
+                <h3 data-i18n="ht-endcar-label">Endwagen</h3>
+                <div class="upload-preview" id="preview-endcar" style="height:160px"></div>
+                <div class="button-row">
+                  <label class="secondary-button file-label"><span data-i18n="btn-choose-file">Auswählen</span><input id="upload-endcar" type="file" accept="image/*"></label>
+                  <button class="danger-button" id="remove-endcar" type="button" data-i18n="btn-remove">Entfernen</button>
+                </div>
+              </div>
+              <div class="upload-card">
+                <h3 data-i18n="ht-wagon-label">Waggon (generisch)</h3>
+                <div class="upload-preview" id="preview-wagon" style="height:160px"></div>
+                <div class="button-row">
+                  <label class="secondary-button file-label"><span data-i18n="btn-choose-file">Auswählen</span><input id="upload-wagon" type="file" accept="image/*"></label>
+                  <button class="danger-button" id="remove-wagon" type="button" data-i18n="btn-remove">Entfernen</button>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <section class="tool-panel">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow" data-i18n="ht-avatars-eyebrow">Zuschauer</p>
+                <h2 data-i18n="ht-avatars-title">Avatare</h2>
+              </div>
+            </div>
+            <p class="hint" data-i18n="ht-avatars-hint">Jeder Zuschauer, der während eines Hype Trains im Chat schreibt, bekommt zufällig eines dieser Bilder zugewiesen.</p>
+            <div class="avatar-grid" id="avatar-grid"></div>
+            <label class="secondary-button file-label"><span data-i18n="btn-add-avatar">Avatare hinzufügen</span><input id="upload-avatar" type="file" accept="image/*" multiple></label>
+          </section>
+
+          <section class="tool-panel">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow">Audio</p>
+                <h2 data-i18n="ht-sounds-title">Sounds</h2>
+              </div>
+            </div>
+            <div class="sound-row" data-sound="start">
+              <div class="sound-row-info">
+                <strong data-i18n="ht-sound-start">Start-Sound</strong>
+                <span class="sound-row-status" id="sound-start-status" data-i18n="status-no-sound">Kein Sound ausgewählt</span>
+              </div>
+              <div class="sound-row-actions">
+                <button class="secondary-button" id="play-start-sound" type="button" disabled data-i18n="btn-play">▶ Abspielen</button>
+                <label class="ghost-button file-label"><span data-i18n="btn-choose-file">Auswählen</span><input id="sound-start" type="file" accept="audio/*"></label>
+                <button class="danger-button" id="remove-start-sound" type="button" disabled data-i18n="btn-remove">Entfernen</button>
+              </div>
+            </div>
+            <div class="sound-row" data-sound="waiting">
+              <div class="sound-row-info">
+                <strong data-i18n="ht-sound-waiting">Warte-Sound (Loop)</strong>
+                <span class="sound-row-status" id="sound-waiting-status" data-i18n="status-no-sound">Kein Sound ausgewählt</span>
+              </div>
+              <div class="sound-row-actions">
+                <button class="secondary-button" id="play-waiting-sound" type="button" disabled data-i18n="btn-play">▶ Abspielen</button>
+                <label class="ghost-button file-label"><span data-i18n="btn-choose-file">Auswählen</span><input id="sound-waiting" type="file" accept="audio/*"></label>
+                <button class="danger-button" id="remove-waiting-sound" type="button" disabled data-i18n="btn-remove">Entfernen</button>
+              </div>
+            </div>
+            <div class="sound-row" data-sound="departure">
+              <div class="sound-row-info">
+                <strong data-i18n="ht-sound-departure">Abfahrt-Sound</strong>
+                <span class="sound-row-status" id="sound-departure-status" data-i18n="status-no-sound">Kein Sound ausgewählt</span>
+              </div>
+              <div class="sound-row-actions">
+                <button class="secondary-button" id="play-departure-sound" type="button" disabled data-i18n="btn-play">▶ Abspielen</button>
+                <label class="ghost-button file-label"><span data-i18n="btn-choose-file">Auswählen</span><input id="sound-departure" type="file" accept="audio/*"></label>
+                <button class="danger-button" id="remove-departure-sound" type="button" disabled data-i18n="btn-remove">Entfernen</button>
+              </div>
+            </div>
+          </section>
+
+          <section class="tool-panel">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow" data-i18n="ht-test-eyebrow">Testlauf</p>
+                <h2 data-i18n="ht-test-title">Animation testen</h2>
+              </div>
+            </div>
+            <div class="form-grid">
+              <label><span data-i18n="ht-test-participants">Anzahl Testteilnehmer</span><input id="test-participants" type="number" min="0" value="8"></label>
+            </div>
+            <div class="button-row">
+              <button class="primary-button" id="test-simulate" type="button" data-i18n="btn-test-simulate">Hype Train testen</button>
+            </div>
+            <p class="hint" data-i18n="hint-overlay-required">Das Overlay muss in OBS oder in einem Browser geöffnet sein, damit du die Animation siehst.</p>
+          </section>
+        </section>
+
+        <section class="tab-panel" data-panel="log">
+          <div class="section-heading">
+            <div>
+              <p class="eyebrow" data-i18n="log-eyebrow">Verlauf</p>
+              <h2 data-i18n="log-title">Ereignis-Log</h2>
+            </div>
+            <input id="log-search" type="search" placeholder="Log durchsuchen..." data-i18n-placeholder="placeholder-log-search">
+          </div>
+          <div class="button-row">
+            <button class="danger-button" id="clear-logs" type="button" data-i18n="btn-clear-logs">Log löschen</button>
+          </div>
+          <p class="hint" id="log-empty-hint" hidden data-i18n="hint-log-empty">Noch keine Ereignisse aufgezeichnet.</p>
+          <div class="log-list" id="log-list"></div>
+        </section>
+
+        <section class="tab-panel" data-panel="update">
+          <section class="tool-panel">
+            <div class="section-heading">
+              <div>
+                <p class="eyebrow" data-i18n="update-eyebrow">Wartung</p>
+                <h2 data-i18n="update-title">Update</h2>
+              </div>
+            </div>
+            <div class="metrics">
+              <div><strong id="update-current-version">0.1.0</strong><span data-i18n="update-current-label">Installierte Version</span></div>
+              <div><strong id="update-current-date">-</strong><span data-i18n="update-date-label">Veröffentlicht am</span></div>
+            </div>
+            <div class="status-line" id="update-status" data-i18n="update-status-idle">Noch nicht geprüft.</div>
+            <div class="button-row">
+              <button class="primary-button" id="check-update" type="button" data-i18n="btn-check-update">Nach Updates suchen</button>
+              <button class="primary-button" id="install-update" type="button" hidden data-i18n="btn-install-update">Installieren</button>
+            </div>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <script type="module" src="/assets/js/admin.js?v=20260705-5"></script>
+  </body>
+</html>
