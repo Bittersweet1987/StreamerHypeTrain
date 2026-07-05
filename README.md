@@ -1,4 +1,8 @@
-# Streamer Hype Train
+<p align="center">
+  <img src="public/assets/img/logo.png" alt="Streamer Hype Train Logo" width="160">
+</p>
+
+# 🚂 Streamer Hype Train
 
 Lokale Windows-App (C# WinForms + WebView2), die einen OBS-Overlay-Zug für Twitch-Hype-Trains
 steuert. Wenn ein Hype Train beginnt, erscheint eine Lokomotive unten rechts im Overlay und
@@ -6,6 +10,8 @@ steuert. Wenn ein Hype Train beginnt, erscheint eine Lokomotive unten rechts im 
 Chat-Nachricht schreibt, bekommt zufällig einen Avatar zugewiesen und "steigt" in einen Waggon
 ein. Endet der Hype Train, fährt der komplette Zug (Lokomotive + ein Waggon pro Teilnehmer +
 Endwagen) mit konstanter Geschwindigkeit nach links aus dem Bild.
+
+<p align="center"><img src="docs/media/hypetrain-preview.gif" alt="Hype-Train-Overlay Vorschau" width="640"></p>
 
 ## Funktionen
 - Live-Overlay als OBS-Browserquelle (`overlay.html`), gesteuert per Server-Sent Events.
